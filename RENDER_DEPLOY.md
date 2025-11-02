@@ -52,7 +52,7 @@ Render создаст все 3 сервиса автоматически!
 - **Root Directory:** (оставить пустым)
 
 **Build & Deploy:**
-- **Build Command:** `corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm -w --filter @studentdeals/api build`
+- **Build Command:** `npm install -g pnpm && pnpm install && pnpm -w --filter @studentdeals/api build`
 - **Start Command:** `node apps/api/dist/main.js`
 
 **Environment:**
@@ -91,7 +91,7 @@ NODE_ENV=production
 - **Branch:** `main`
 
 **Build & Deploy:**
-- **Build Command:** `corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm -w --filter @studentdeals/bot build`
+- **Build Command:** `npm install -g pnpm && pnpm install && pnpm -w --filter @studentdeals/bot build`
 - **Start Command:** `node apps/bot/dist/index.js`
 
 **Environment:**
