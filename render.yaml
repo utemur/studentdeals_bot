@@ -2,8 +2,8 @@ services:
   - type: web
     name: studentdeals-api
     env: node
-    buildCommand: npm install -g pnpm && pnpm install && pnpm -w --filter @studentdeals/api build
-    startCommand: node apps/api/dist/main.js
+    buildCommand: npm install -g pnpm && pnpm install --frozen-lockfile && pnpm -w --filter @studentdeals/api build
+    startCommand: pnpm -w --filter @studentdeals/api start:prod
     healthCheckPath: /healthz
     envVars:
       - key: DATABASE_URL
@@ -34,8 +34,8 @@ services:
   - type: web
     name: studentdeals-bot
     env: node
-    buildCommand: npm install -g pnpm && pnpm install && pnpm -w --filter @studentdeals/bot build
-    startCommand: node apps/bot/dist/index.js
+    buildCommand: npm install -g pnpm && pnpm install --frozen-lockfile && pnpm -w --filter @studentdeals/bot build
+    startCommand: pnpm -w --filter @studentdeals/bot start:prod
     healthCheckPath: /healthz
     envVars:
       - key: TELEGRAM_BOT_TOKEN

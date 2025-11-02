@@ -52,11 +52,11 @@ Render создаст все 3 сервиса автоматически!
 - **Root Directory:** (оставить пустым)
 
 **Build & Deploy:**
-- **Build Command:** `npm install -g pnpm && pnpm install && pnpm -w --filter @studentdeals/api build`
-- **Start Command:** `node apps/api/dist/main.js`
+- **Build Command:** `npm install -g pnpm && pnpm install --frozen-lockfile && pnpm -w --filter @studentdeals/api build`
+- **Start Command:** `pnpm -w --filter @studentdeals/api start:prod`
 
 **Environment:**
-- **Node:** Version 20 или 22
+- **Node:** Version 22
 
 **Plan:** Free
 
@@ -91,11 +91,11 @@ NODE_ENV=production
 - **Branch:** `main`
 
 **Build & Deploy:**
-- **Build Command:** `npm install -g pnpm && pnpm install && pnpm -w --filter @studentdeals/bot build`
-- **Start Command:** `node apps/bot/dist/index.js`
+- **Build Command:** `npm install -g pnpm && pnpm install --frozen-lockfile && pnpm -w --filter @studentdeals/bot build`
+- **Start Command:** `pnpm -w --filter @studentdeals/bot start:prod`
 
 **Environment:**
-- **Node:** Version 20 или 22
+- **Node:** Version 22
 
 **Plan:** Free
 
