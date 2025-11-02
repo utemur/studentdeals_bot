@@ -2,7 +2,7 @@ services:
   - type: web
     name: studentdeals-api
     env: node
-    buildCommand: pnpm -w --filter @studentdeals/api build
+    buildCommand: corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm -w --filter @studentdeals/api build
     startCommand: node apps/api/dist/main.js
     healthCheckPath: /healthz
     envVars:
@@ -34,7 +34,7 @@ services:
   - type: web
     name: studentdeals-bot
     env: node
-    buildCommand: pnpm -w --filter @studentdeals/bot build
+    buildCommand: corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm -w --filter @studentdeals/bot build
     startCommand: node apps/bot/dist/index.js
     healthCheckPath: /healthz
     envVars:
@@ -64,4 +64,3 @@ services:
         sync: false
       - key: NODE_ENV
         value: production
-
