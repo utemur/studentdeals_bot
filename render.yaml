@@ -1,0 +1,67 @@
+services:
+  - type: web
+    name: studentdeals-api
+    env: node
+    buildCommand: pnpm -w --filter @studentdeals/api build
+    startCommand: node apps/api/dist/main.js
+    healthCheckPath: /healthz
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: STUDENT_EMAIL_DOMAINS
+        sync: false
+      - key: CODE_PEPPER
+        sync: false
+      - key: CODE_TTL_SECONDS
+        sync: false
+      - key: CODE_MAX_ATTEMPTS
+        sync: false
+      - key: SESSION_URL_TTL_SECONDS
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_ISSUER
+        sync: false
+      - key: JWT_AUDIENCE
+        sync: false
+      - key: NODE_ENV
+        value: production
+
+  - type: web
+    name: studentdeals-bot
+    env: node
+    buildCommand: pnpm -w --filter @studentdeals/bot build
+    startCommand: node apps/bot/dist/index.js
+    healthCheckPath: /healthz
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: BOT_WEBHOOK_SECRET
+        sync: false
+      - key: BOT_WEBHOOK_BASE
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: API_URL
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: STUDENT_EMAIL_DOMAINS
+        sync: false
+      - key: CODE_PEPPER
+        sync: false
+      - key: CODE_TTL_SECONDS
+        sync: false
+      - key: CODE_RESEND_COOLDOWN
+        sync: false
+      - key: CODE_MAX_ATTEMPTS
+        sync: false
+      - key: SESSION_URL_TTL_SECONDS
+        sync: false
+      - key: NODE_ENV
+        value: production
+

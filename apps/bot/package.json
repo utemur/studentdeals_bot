@@ -1,0 +1,27 @@
+{
+  "name": "@studentdeals/bot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "start": "node --enable-source-maps dist/index.js",
+    "build": "tsup src/index.ts --format esm --dts --minify --sourcemap",
+    "set-webhook": "tsx src/index.ts --set-webhook",
+    "delete-webhook": "tsx src/index.ts --delete-webhook"
+  },
+  "dependencies": {
+    "telegraf": "^4.16.3",
+    "express": "^4.19.2",
+    "zod": "^3.23.8",
+    "node-fetch": "^3.3.2",
+    "@resend/sdk": "^2.0.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.2.4",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "@types/express": "^4.17.21"
+  }
+}
+

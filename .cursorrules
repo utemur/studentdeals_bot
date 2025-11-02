@@ -1,0 +1,40 @@
+# StudentDeals Bot Project Rules
+
+## Project Structure
+This is a monorepo using pnpm workspaces with two main apps:
+- `apps/api`: NestJS backend with Prisma ORM
+- `apps/bot`: Telegram bot using Telegraf
+
+## Code Standards
+- Use TypeScript everywhere
+- Follow NestJS conventions for API code
+- Use inline documentation for complex logic
+- Keep functions focused and modular
+
+## Environment
+- All environment variables are in .env.example
+- Never commit .env files
+- Use .env.local for local development
+
+## Database
+- Use Prisma for all database operations
+- Run migrations before deploying
+- Keep schema.prisma in sync with models
+
+## Bot
+- Bot uses Telegraf v4
+- Support both polling (dev) and webhook (prod)
+- Use scene-based handlers for complex flows
+- Implement rate limiting on commands
+
+## API
+- Use NestJS modules, controllers, services pattern
+- Validate all inputs with class-validator
+- Return consistent JSON responses
+- Implement proper error handling
+
+## Security
+- Hash verification codes with SHA256
+- Use JWT for session tokens
+- Enforce rate limits
+- Validate all user inputs
