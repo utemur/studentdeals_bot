@@ -65,12 +65,17 @@ export function setupVerifyHandlers(bot: Telegraf, config: Config) {
 
       try {
         // Отправляем запрос на старт верификации
+        console.log(`Sending request to: ${config.apiUrl}/auth/bot/start-email`);
+        console.log(`Payload:`, { email, telegramId });
+        
         const response = await fetch(`${config.apiUrl}/auth/bot/start-email`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, telegramId }),
         });
 
+        console.log(`Response status: ${response.status}`);
+        
         if (!response.ok) {
           const error = await response.text();
           console.error('Start email error:', error);
