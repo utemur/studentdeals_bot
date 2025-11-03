@@ -1,5 +1,4 @@
 import { Telegraf } from 'telegraf';
-import express from 'express';
 import { loadConfig } from './config';
 import { setupStartHandler } from './handlers/start';
 import { setupHelpHandler } from './handlers/help';
@@ -8,7 +7,7 @@ import { rateLimit } from './middlewares/rateLimit';
 
 const config = loadConfig();
 
-const bot = new Telegraf(config.telegramBotToken);
+export const bot = new Telegraf(config.telegramBotToken);
 
 // Middleware для rate limit
 bot.use(rateLimit(10, 60000)); // 10 команд в минуту
@@ -37,34 +36,18 @@ bot.catch((err, ctx) => {
   ctx.reply('❌ An error occurred. Please try again.');
 });
 
+// Graceful shutdown
+process.once('SIGINT', () => {
+  bot.stop('SIGINT');
+});
+process.once('SIGTERM', () => {
+  bot.stop('SIGTERM');
+});
+
 async function startPolling() {
   console.log('🤖 Starting bot in polling mode...');
   await bot.launch();
   console.log('✅ Bot is running!');
-}
-
-async function startWebhook() {
-  const app = express();
-  
-  // Middleware для парсинга JSON
-  app.use(express.json());
-  
-  // Health check для Render
-  app.get('/healthz', (req, res) => {
-    res.json({ status: 'ok' });
-  });
-
-  // Webhook путь
-  const webhookPath = `/webhook/telegram/${config.webhookSecret}`;
-  app.post(webhookPath, async (req, res) => {
-    await bot.handleUpdate(req.body, res);
-  });
-
-  const port = process.env.PORT || 3001;
-  app.listen(port, () => {
-    console.log(`🚀 Webhook server listening on port ${port}`);
-    console.log(`📡 Webhook path: ${webhookPath}`);
-  });
 }
 
 async function setWebhook() {
@@ -101,19 +84,8 @@ async function main() {
     process.exit(0);
   }
 
-  if (config.nodeEnv === 'production' && config.webhookBase) {
-    await startWebhook();
-  } else {
-    await startPolling();
-  }
-
-  // Graceful shutdown
-  process.once('SIGINT', () => {
-    bot.stop('SIGINT');
-  });
-  process.once('SIGTERM', () => {
-    bot.stop('SIGTERM');
-  });
+  // Default: start polling
+  await startPolling();
 }
 
 main().catch((err) => {
