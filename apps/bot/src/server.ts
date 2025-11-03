@@ -1,5 +1,5 @@
 import express from 'express';
-import { bot } from './index';
+import { bot } from './bot';
 import { loadConfig } from './config';
 
 const config = loadConfig();
@@ -49,4 +49,3 @@ process.once('SIGTERM', () => {
   bot.stop('SIGTERM');
   process.exit(0);
 });
-

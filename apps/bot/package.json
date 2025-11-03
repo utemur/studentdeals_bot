@@ -8,7 +8,7 @@
     "start": "node dist/index.js",
     "start:prod": "node dist/index.js",
     "start:webhook": "node dist/server.js",
-    "build": "tsup src/index.ts src/server.ts --format esm --dts --minify --sourcemap",
+    "build": "tsup src/index.ts src/server.ts src/bot.ts --format esm --dts --minify --sourcemap",
     "set-webhook": "tsx src/index.ts --set-webhook",
     "delete-webhook": "tsx src/index.ts --delete-webhook"
   },
