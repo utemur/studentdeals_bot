@@ -18,12 +18,18 @@ const configSchema = z.object({
 export type Config = z.infer<typeof configSchema>;
 
 export function loadConfig(): Config {
+  let apiUrl = process.env.API_URL || '';
+  // Убираем завершающий слеш, если есть
+  if (apiUrl.endsWith('/')) {
+    apiUrl = apiUrl.slice(0, -1);
+  }
+  
   const config = configSchema.parse({
     telegramBotToken: process.env.TELEGRAM_BOT_TOKEN,
     webhookSecret: process.env.BOT_WEBHOOK_SECRET,
     webhookBase: process.env.BOT_WEBHOOK_BASE,
     frontendUrl: process.env.FRONTEND_URL,
-    apiUrl: process.env.API_URL,
+    apiUrl: apiUrl,
     resendApiKey: process.env.RESEND_API_KEY,
     nodeEnv: process.env.NODE_ENV || 'development',
     studentDomains: process.env.STUDENT_EMAIL_DOMAINS || '.edu,.ac.uk,.edu.uz',

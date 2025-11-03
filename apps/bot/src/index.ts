@@ -4,6 +4,8 @@ import { setupStartHandler } from './handlers/start';
 import { setupHelpHandler } from './handlers/help';
 import { setupVerifyHandlers, clearVerificationState } from './handlers/verify';
 import { rateLimit } from './middlewares/rateLimit';
+import { fileURLToPath } from 'url';
+import { basename } from 'path';
 
 const config = loadConfig();
 
@@ -88,8 +90,15 @@ async function main() {
   await startPolling();
 }
 
-main().catch((err) => {
-  console.error('Fatal error:', err);
-  process.exit(1);
-});
+// Запускаем main только если файл вызывается напрямую
+// В ES modules проверяем через import.meta.url
+const __filename = fileURLToPath(import.meta.url);
+const isMainModule = process.argv[1] && basename(process.argv[1]) === 'index.js';
+
+if (isMainModule) {
+  main().catch((err) => {
+    console.error('Fatal error:', err);
+    process.exit(1);
+  });
+}
 
