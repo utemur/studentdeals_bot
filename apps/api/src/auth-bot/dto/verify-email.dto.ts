@@ -2,13 +2,13 @@ import { IsString, Length } from 'class-validator';
 
 export class VerifyEmailDto {
   @IsString()
-  verificationId: string;
+  verificationId!: string;
 
   @IsString()
   @Length(6, 6)
-  code: string;
+  code!: string;
 
   @IsString()
-  telegramId: string;
+  telegramId!: string;
 }
 
