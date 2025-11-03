@@ -12,6 +12,8 @@ export class MailService {
     const apiKey = this.configService.get<string>('RESEND_API_KEY');
     if (!apiKey) {
       console.warn('RESEND_API_KEY not set - email sending will fail');
+    } else {
+      console.log('Resend initialized with API key:', apiKey.substring(0, 10) + '...');
     }
     this.resend = new Resend(apiKey);
     this.frontendUrl = this.configService.get<string>('FRONTEND_URL') || 
@@ -22,8 +24,11 @@ export class MailService {
     const codeTtl = parseInt(process.env.CODE_TTL_SECONDS || '900', 10);
     const minutes = Math.floor(codeTtl / 60);
 
+    console.log(`Attempting to send verification code to ${email}`);
+    console.log(`Code: ${code}, From: ${this.fromEmail}`);
+
     try {
-      await this.resend.emails.send({
+      const result = await this.resend.emails.send({
         from: this.fromEmail,
         to: email,
         subject: 'Your StudentDeals verification code',
@@ -42,10 +47,11 @@ export class MailService {
           </div>
         `,
       });
-      console.log(`Verification code sent to ${email}`);
+      console.log(`✅ Verification code sent to ${email}, result:`, result);
     } catch (error) {
-      console.error('Failed to send email:', error);
-      throw new Error('Failed to send verification email');
+      console.error('❌ Failed to send email:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      throw error;
     }
   }
 }

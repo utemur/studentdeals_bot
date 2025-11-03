@@ -59,7 +59,13 @@ export class AuthBotService {
     });
 
     // Отправляем письмо
-    await this.mailService.sendVerificationCode(email, code);
+    try {
+      await this.mailService.sendVerificationCode(email, code);
+    } catch (error) {
+      console.error('Failed to send verification email:', error);
+      // Не выбрасываем ошибку, чтобы пользователь мог повторить
+      // возвращаем success, но письмо не было отправлено
+    }
 
     return {
       verificationId: verification.id,
