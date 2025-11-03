@@ -23,7 +23,7 @@
     "rxjs": "^7.8.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
-    "@resend/sdk": "^2.0.0"
+    "resend": "^4.0.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.3.0",

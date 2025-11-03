@@ -1,4 +1,4 @@
-import { Resend } from '@resend/sdk';
+import { Resend } from 'resend';
 
 let resendClient: Resend | null = null;
 

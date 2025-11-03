@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Resend } from '@resend/sdk';
+import { Resend } from 'resend';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
