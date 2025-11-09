@@ -62,7 +62,7 @@ bot.on('text', async (ctx) => {
 
     pendingVerifications.set(userId, { email: message.toLowerCase(), code, expires });
 
-    await ctx.reply(`📧 Sending verification code to ${message.toLowerCase()}...`);
+    await ctx.reply(`📧 Sending verification code to ${message.toLowerCase()}...\n\n📥 Please check your inbox as well as Junk/Spam folders.`);
 
     try {
       await resendClient.emails.send({
