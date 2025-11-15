@@ -24,6 +24,9 @@ export function loadConfig(): Config {
     apiUrl = apiUrl.slice(0, -1);
   }
   
+  console.log(`[Config] API_URL: ${apiUrl}`);
+  console.log(`[Config] FRONTEND_URL: ${process.env.FRONTEND_URL}`);
+  
   const config = configSchema.parse({
     telegramBotToken: process.env.TELEGRAM_BOT_TOKEN,
     webhookSecret: process.env.BOT_WEBHOOK_SECRET,
@@ -38,6 +41,9 @@ export function loadConfig(): Config {
     codeMaxAttempts: process.env.CODE_MAX_ATTEMPTS || '5',
     sessionUrlTtl: process.env.SESSION_URL_TTL_SECONDS || '120',
   });
+
+  console.log(`[Config] Final API URL: ${config.apiUrl}`);
+  console.log(`[Config] Final Frontend URL: ${config.frontendUrl}`);
 
   return config;
 }
