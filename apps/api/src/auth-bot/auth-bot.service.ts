@@ -28,7 +28,7 @@ export class AuthBotService {
     this.maxAttempts = parseInt(process.env.CODE_MAX_ATTEMPTS || '5', 10);
     this.sessionTtl = parseInt(process.env.SESSION_URL_TTL_SECONDS || '120', 10);
     this.codePepper = process.env.CODE_PEPPER || 'default-pepper-change-in-production';
-    this.frontendUrl = process.env.FRONTEND_URL || 'https://studentdeals-uz-web.vercel.app';
+    this.frontendUrl = process.env.FRONTEND_URL || 'https://www.studentdeals.uz';
   }
 
   async startEmail(dto: StartEmailDto) {

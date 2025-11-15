@@ -17,7 +17,7 @@ export class MailService {
     }
     this.resend = new Resend(apiKey);
     this.frontendUrl = this.configService.get<string>('FRONTEND_URL') || 
-      'https://studentdeals-uz-web.vercel.app';
+      'https://www.studentdeals.uz';
   }
 
   async sendVerificationCode(email: string, code: string) {
