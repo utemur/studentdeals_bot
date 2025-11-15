@@ -260,56 +260,43 @@ export function setupVerifyHandlers(bot: Telegraf, config: Config) {
           );
         }
 
-        // Если у пользователя уже есть пароль, сразу выдаём session URL
-        if (data.hasPassword) {
-          console.log('User already has password, issuing session');
+        // Пытаемся получить session URL для авторизованного доступа
+        let sessionUrl: string | null = null;
+        try {
           const sessionResponse = await fetch(`${config.apiUrl}/auth/bot/issue-session`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ telegramId }),
           });
 
-          if (!sessionResponse.ok) {
-            console.error('Issue session error:', await sessionResponse.text());
-            return ctx.reply(
-              '✅ Email verified! But failed to generate session link. Please contact support.',
-              { reply_to_message_id: ctx.message.message_id }
-            );
+          if (sessionResponse.ok) {
+            const sessionData = await sessionResponse.json() as { sessionUrl: string };
+            sessionUrl = sessionData.sessionUrl;
+          } else {
+            console.log('Session URL not available, using direct link');
           }
-
-          const sessionData = await sessionResponse.json() as { sessionUrl: string };
-          
-          // Очищаем состояние
-          verificationStates.delete(userId);
-
-          // Отправляем кнопку с ссылкой
-          const keyboard = Markup.inlineKeyboard([
-            [Markup.button.url('🎉 Open my account', sessionData.sessionUrl)],
-          ]);
-
-          return ctx.reply(
-            '🎉 <b>Successfully verified!</b>\n\n' +
-            'You can now access your StudentDeals account by clicking the button below:',
-            {
-              parse_mode: 'HTML',
-              reply_markup: keyboard.reply_markup,
-              reply_to_message_id: ctx.message.message_id,
-            }
-          );
+        } catch (error) {
+          console.log('Failed to get session URL, using direct link:', error);
         }
 
-        // Помечаем как верифицированного и запрашиваем пароль
-        console.log('User does not have password, requesting password creation');
-        state.verified = true;
-        state.waitingForPassword = true;
+        // Очищаем состояние
+        verificationStates.delete(userId);
+
+        // Используем session URL если доступен, иначе прямую ссылку на сайт
+        const linkUrl = sessionUrl || config.frontendUrl;
+        const buttonText = sessionUrl ? '🎉 OPEN' : '🎉 OPEN StudentDeals';
+
+        // Отправляем кнопку с ссылкой
+        const keyboard = Markup.inlineKeyboard([
+          [Markup.button.url(buttonText, linkUrl)],
+        ]);
 
         return ctx.reply(
           '✅ <b>Email verified successfully!</b>\n\n' +
-          'Now please create a password for your account.\n' +
-          'Password must be at least 8 characters long.\n\n' +
-          'Enter your password:',
+          'Click the button below to open StudentDeals:',
           {
             parse_mode: 'HTML',
+            reply_markup: keyboard.reply_markup,
             reply_to_message_id: ctx.message.message_id,
           }
         );
