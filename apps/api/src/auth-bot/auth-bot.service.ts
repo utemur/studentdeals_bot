@@ -135,10 +135,19 @@ export class AuthBotService {
       },
     });
 
+    // Получаем пользователя заново, чтобы убедиться, что у нас актуальные данные
+    const updatedUser = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      select: { id: true, passwordHash: true },
+    });
+
+    const hasPassword = !!updatedUser!.passwordHash;
+    console.log(`User ${updatedUser!.id} verification: hasPassword=${hasPassword}`);
+
     return {
       ok: true,
-      userId: user.id,
-      hasPassword: !!user.passwordHash,
+      userId: updatedUser!.id,
+      hasPassword,
     };
   }
 

@@ -251,6 +251,8 @@ export function setupVerifyHandlers(bot: Telegraf, config: Config) {
 
         const data = await response.json() as { ok: boolean; userId: string; hasPassword?: boolean };
 
+        console.log('Verify email response:', JSON.stringify(data));
+
         if (!data.ok) {
           return ctx.reply(
             '❌ Verification failed. Please try again.',
@@ -260,6 +262,7 @@ export function setupVerifyHandlers(bot: Telegraf, config: Config) {
 
         // Если у пользователя уже есть пароль, сразу выдаём session URL
         if (data.hasPassword) {
+          console.log('User already has password, issuing session');
           const sessionResponse = await fetch(`${config.apiUrl}/auth/bot/issue-session`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -296,6 +299,7 @@ export function setupVerifyHandlers(bot: Telegraf, config: Config) {
         }
 
         // Помечаем как верифицированного и запрашиваем пароль
+        console.log('User does not have password, requesting password creation');
         state.verified = true;
         state.waitingForPassword = true;
 
