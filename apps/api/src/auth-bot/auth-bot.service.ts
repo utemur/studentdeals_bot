@@ -3,9 +3,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { StartEmailDto } from './dto/start-email.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { IssueSessionDto } from './dto/issue-session.dto';
+import { SetPasswordDto } from './dto/set-password.dto';
 import { MailService } from './mail.service';
 import { JwtService } from '@nestjs/jwt';
-import { createHash } from 'crypto';
+import { createHash, pbkdf2Sync, randomBytes } from 'crypto';
 
 @Injectable()
 export class AuthBotService {
@@ -137,6 +138,7 @@ export class AuthBotService {
     return {
       ok: true,
       userId: user.id,
+      hasPassword: !!user.passwordHash,
     };
   }
 
@@ -168,6 +170,38 @@ export class AuthBotService {
 
   private generateCode(): string {
     return Math.floor(100000 + Math.random() * 900000).toString();
+  }
+
+  async setPassword(dto: SetPasswordDto) {
+    const { telegramId, password } = dto;
+
+    // Проверяем, что пользователь существует и верифицирован
+    const user = await this.prisma.user.findUnique({
+      where: { telegramId },
+    });
+
+    if (!user || !user.emailVerified) {
+      throw new UnauthorizedException('User not verified');
+    }
+
+    if (user.passwordHash) {
+      throw new BadRequestException('Password already set');
+    }
+
+    // Хэшируем пароль используя pbkdf2 (встроенный в Node.js)
+    const salt = randomBytes(32).toString('hex');
+    const hash = pbkdf2Sync(password, salt, 100000, 64, 'sha512').toString('hex');
+    const passwordHash = `${salt}:${hash}`;
+
+    // Обновляем пользователя
+    await this.prisma.user.update({
+      where: { telegramId },
+      data: { passwordHash },
+    });
+
+    return {
+      ok: true,
+    };
   }
 
   private hashCode(code: string): string {

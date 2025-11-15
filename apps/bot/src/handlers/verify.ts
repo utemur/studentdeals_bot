@@ -6,6 +6,8 @@ interface VerificationState {
   verificationId?: string;
   email?: string;
   attemptCount: number;
+  verified: boolean; // Флаг, что верификация прошла успешно
+  waitingForPassword: boolean; // Флаг, что ждём ввода пароля
 }
 
 const verificationStates = new Map<number, VerificationState>();
@@ -17,7 +19,7 @@ export function setupVerifyHandlers(bot: Telegraf, config: Config) {
     if (!userId) return;
 
     // Сбрасываем состояние
-    verificationStates.set(userId, { attemptCount: 0 });
+    verificationStates.set(userId, { attemptCount: 0, verified: false, waitingForPassword: false });
 
     await ctx.answerCbQuery();
     await ctx.editMessageText(
@@ -38,6 +40,95 @@ export function setupVerifyHandlers(bot: Telegraf, config: Config) {
 
     const text = ctx.message.text;
     const telegramId = userId.toString();
+
+    // Если ждём пароль, обрабатываем его
+    if (state.waitingForPassword) {
+      const password = text.trim();
+
+      // Проверяем минимальную длину пароля
+      if (password.length < 8) {
+        return ctx.reply(
+          '❌ Password must be at least 8 characters long. Please try again:',
+          { reply_to_message_id: ctx.message.message_id }
+        );
+      }
+
+      try {
+        // Отправляем запрос на установку пароля
+        const response = await fetch(`${config.apiUrl}/auth/bot/set-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ telegramId, password }),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Set password error:', errorText);
+          
+          if (response.status === 400) {
+            return ctx.reply(
+              '❌ Password already set or invalid request. Please contact support.',
+              { reply_to_message_id: ctx.message.message_id }
+            );
+          }
+
+          return ctx.reply(
+            '❌ Failed to set password. Please try again:',
+            { reply_to_message_id: ctx.message.message_id }
+          );
+        }
+
+        const data = await response.json() as { ok: boolean };
+
+        if (!data.ok) {
+          return ctx.reply(
+            '❌ Failed to set password. Please try again:',
+            { reply_to_message_id: ctx.message.message_id }
+          );
+        }
+
+        // Получаем session URL
+        const sessionResponse = await fetch(`${config.apiUrl}/auth/bot/issue-session`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ telegramId }),
+        });
+
+        if (!sessionResponse.ok) {
+          console.error('Issue session error:', await sessionResponse.text());
+          return ctx.reply(
+            '✅ Password set! But failed to generate session link. Please contact support.',
+            { reply_to_message_id: ctx.message.message_id }
+          );
+        }
+
+        const sessionData = await sessionResponse.json() as { sessionUrl: string };
+        
+        // Очищаем состояние
+        verificationStates.delete(userId);
+
+        // Отправляем кнопку с ссылкой
+        const keyboard = Markup.inlineKeyboard([
+          [Markup.button.url('🎉 Open my account', sessionData.sessionUrl)],
+        ]);
+
+        return ctx.reply(
+          '🎉 <b>Successfully verified and password set!</b>\n\n' +
+          'You can now access your StudentDeals account by clicking the button below:',
+          {
+            parse_mode: 'HTML',
+            reply_markup: keyboard.reply_markup,
+            reply_to_message_id: ctx.message.message_id,
+          }
+        );
+      } catch (error) {
+        console.error('Set password error:', error);
+        return ctx.reply(
+          '❌ An error occurred. Please try again.',
+          { reply_to_message_id: ctx.message.message_id }
+        );
+      }
+    }
 
     // Если у нас нет verificationId, значит вводится email
     if (!state.verificationId) {
@@ -158,7 +249,7 @@ export function setupVerifyHandlers(bot: Telegraf, config: Config) {
           );
         }
 
-        const data = await response.json() as { ok: boolean; userId: string };
+        const data = await response.json() as { ok: boolean; userId: string; hasPassword?: boolean };
 
         if (!data.ok) {
           return ctx.reply(
@@ -167,37 +258,54 @@ export function setupVerifyHandlers(bot: Telegraf, config: Config) {
           );
         }
 
-        // Получаем session URL
-        const sessionResponse = await fetch(`${config.apiUrl}/auth/bot/issue-session`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ telegramId }),
-        });
+        // Если у пользователя уже есть пароль, сразу выдаём session URL
+        if (data.hasPassword) {
+          const sessionResponse = await fetch(`${config.apiUrl}/auth/bot/issue-session`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ telegramId }),
+          });
 
-        if (!sessionResponse.ok) {
-          console.error('Issue session error:', await sessionResponse.text());
+          if (!sessionResponse.ok) {
+            console.error('Issue session error:', await sessionResponse.text());
+            return ctx.reply(
+              '✅ Email verified! But failed to generate session link. Please contact support.',
+              { reply_to_message_id: ctx.message.message_id }
+            );
+          }
+
+          const sessionData = await sessionResponse.json() as { sessionUrl: string };
+          
+          // Очищаем состояние
+          verificationStates.delete(userId);
+
+          // Отправляем кнопку с ссылкой
+          const keyboard = Markup.inlineKeyboard([
+            [Markup.button.url('🎉 Open my account', sessionData.sessionUrl)],
+          ]);
+
           return ctx.reply(
-            '✅ Email verified! But failed to generate session link. Please contact support.',
-            { reply_to_message_id: ctx.message.message_id }
+            '🎉 <b>Successfully verified!</b>\n\n' +
+            'You can now access your StudentDeals account by clicking the button below:',
+            {
+              parse_mode: 'HTML',
+              reply_markup: keyboard.reply_markup,
+              reply_to_message_id: ctx.message.message_id,
+            }
           );
         }
 
-        const sessionData = await sessionResponse.json() as { sessionUrl: string };
-        
-        // Очищаем состояние
-        verificationStates.delete(userId);
-
-        // Отправляем кнопку с ссылкой
-        const keyboard = Markup.inlineKeyboard([
-          [Markup.button.url('🎉 Open my account', sessionData.sessionUrl)],
-        ]);
+        // Помечаем как верифицированного и запрашиваем пароль
+        state.verified = true;
+        state.waitingForPassword = true;
 
         return ctx.reply(
-          '🎉 <b>Successfully verified!</b>\n\n' +
-          'You can now access your StudentDeals account by clicking the button below:',
+          '✅ <b>Email verified successfully!</b>\n\n' +
+          'Now please create a password for your account.\n' +
+          'Password must be at least 8 characters long.\n\n' +
+          'Enter your password:',
           {
             parse_mode: 'HTML',
-            reply_markup: keyboard.reply_markup,
             reply_to_message_id: ctx.message.message_id,
           }
         );

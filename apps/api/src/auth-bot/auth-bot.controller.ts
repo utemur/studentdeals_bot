@@ -4,6 +4,7 @@ import { AuthBotService } from './auth-bot.service';
 import { StartEmailDto } from './dto/start-email.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { IssueSessionDto } from './dto/issue-session.dto';
+import { SetPasswordDto } from './dto/set-password.dto';
 
 @Controller('auth/bot')
 export class AuthBotController {
@@ -24,6 +25,12 @@ export class AuthBotController {
   @Post('issue-session')
   async issueSession(@Body() dto: IssueSessionDto) {
     return this.authBotService.issueSession(dto);
+  }
+
+  @SkipThrottle()
+  @Post('set-password')
+  async setPassword(@Body() dto: SetPasswordDto) {
+    return this.authBotService.setPassword(dto);
   }
 }
 

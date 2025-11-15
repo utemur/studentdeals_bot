@@ -12,6 +12,7 @@ model User {
   email          String?   @unique @db.VarChar(255)
   emailVerified  Boolean   @default(false)
   emailVerifiedAt DateTime?
+  passwordHash   String?
   telegramId     String?   @unique
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
