@@ -164,10 +164,11 @@ export function setupVerifyHandlers(bot: Telegraf, config: Config) {
 
       try {
         // Отправляем запрос на старт верификации
-        console.log(`Sending request to: ${config.apiUrl}/auth/bot/start-email`);
+        const apiEndpoint = `${config.apiUrl}/auth/bot/start-email`;
+        console.log(`Sending request to: ${apiEndpoint}`);
         console.log(`Payload:`, { email, telegramId });
         
-        const response = await fetch(`${config.apiUrl}/auth/bot/start-email`, {
+        const response = await fetch(apiEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, telegramId }),
@@ -178,6 +179,17 @@ export function setupVerifyHandlers(bot: Telegraf, config: Config) {
         if (!response.ok) {
           const error = await response.text();
           console.error('Start email error:', error);
+          console.error(`API URL: ${config.apiUrl}`);
+          console.error(`Full endpoint: ${apiEndpoint}`);
+          
+          if (response.status === 404) {
+            return ctx.reply(
+              '❌ API endpoint not found. Please check API_URL configuration.\n\n' +
+              'The API service might not be running or the URL is incorrect.',
+              { reply_to_message_id: ctx.message.message_id }
+            );
+          }
+          
           return ctx.reply(
             '❌ Failed to start verification. Please try again later.',
             { reply_to_message_id: ctx.message.message_id }
