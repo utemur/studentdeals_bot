@@ -2,7 +2,7 @@ services:
   - type: web
     name: studentdeals-api
     env: node
-    buildCommand: npm install -g pnpm && pnpm install --frozen-lockfile && cd apps/api && pnpm prisma generate && (bash scripts/fix-migration.sh || true) && pnpm prisma migrate deploy && cd ../.. && pnpm -w --filter @studentdeals/api build
+    buildCommand: npm install -g pnpm && pnpm install --frozen-lockfile && cd apps/api && pnpm prisma generate && (node scripts/fix-migration.js || echo "Migration fix attempted") && (pnpm prisma migrate resolve --rolled-back 20250101000000_add_password_hash 2>&1 || echo "Migration resolve skipped") && pnpm prisma migrate deploy && cd ../.. && pnpm -w --filter @studentdeals/api build
     startCommand: pnpm -w --filter @studentdeals/api start:prod
     healthCheckPath: /healthz
     envVars:
