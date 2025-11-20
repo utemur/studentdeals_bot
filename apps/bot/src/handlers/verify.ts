@@ -88,33 +88,41 @@ export function setupVerifyHandlers(bot: Telegraf, config: Config) {
         }
 
         // Получаем session URL
-        const sessionResponse = await fetch(`${config.apiUrl}/auth/bot/issue-session`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ telegramId }),
-        });
+        let sessionUrl: string | null = null;
+        try {
+          const sessionResponse = await fetch(`${config.apiUrl}/auth/bot/issue-session`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ telegramId }),
+          });
 
-        if (!sessionResponse.ok) {
-          console.error('Issue session error:', await sessionResponse.text());
-          return ctx.reply(
-            '✅ Password set! But failed to generate session link. Please contact support.',
-            { reply_to_message_id: ctx.message.message_id }
-          );
+          if (sessionResponse.ok) {
+            const sessionData = await sessionResponse.json() as { sessionUrl: string };
+            sessionUrl = sessionData.sessionUrl;
+            console.log('Session URL obtained:', sessionUrl);
+          } else {
+            console.error('Issue session error:', await sessionResponse.text());
+          }
+        } catch (error) {
+          console.log('Failed to get session URL, using direct link:', error);
         }
-
-        const sessionData = await sessionResponse.json() as { sessionUrl: string };
         
         // Очищаем состояние
         verificationStates.delete(userId);
 
+        // Используем session URL если доступен, иначе прямую ссылку на сайт
+        const linkUrl = sessionUrl || config.frontendUrl;
+        const buttonText = sessionUrl ? '🎉 OPEN' : '🎉 OPEN StudentDeals';
+
         // Отправляем кнопку с ссылкой
         const keyboard = Markup.inlineKeyboard([
-          [Markup.button.url('🎉 Open my account', sessionData.sessionUrl)],
+          [Markup.button.url(buttonText, linkUrl)],
         ]);
 
         return ctx.reply(
-          '🎉 <b>Successfully verified and password set!</b>\n\n' +
-          'You can now access your StudentDeals account by clicking the button below:',
+          '🎉 <b>Password created successfully!</b>\n\n' +
+          'Your account is now ready. You can use your email and password to log in to the website.\n\n' +
+          'Click the button below to open StudentDeals:',
           {
             parse_mode: 'HTML',
             reply_markup: keyboard.reply_markup,
@@ -248,21 +256,21 @@ export function setupVerifyHandlers(bot: Telegraf, config: Config) {
           }
 
           // Если API недоступен (404, 500 и т.д.), но код правильный, 
-          // все равно показываем кнопку OPEN (верификация могла пройти на стороне API)
+          // запрашиваем пароль (верификация могла пройти на стороне API)
           if (response.status === 404 || response.status >= 500) {
-            console.log('API unavailable, but showing OPEN button anyway');
-            verificationStates.delete(userId);
+            console.log('API unavailable, but requesting password anyway');
+            state.verified = true;
+            state.waitingForPassword = true;
             
-            const keyboard = Markup.inlineKeyboard([
-              [Markup.button.url('🎉 OPEN StudentDeals', config.frontendUrl)],
-            ]);
-
             return ctx.reply(
               '✅ <b>Email verification may have succeeded!</b>\n\n' +
-              'Click the button below to open StudentDeals:',
+              '🔐 <b>Create your password</b>\n\n' +
+              'Please create a password for your StudentDeals account.\n' +
+              'You will use this password to log in to the website in the future.\n\n' +
+              'Password must be at least 8 characters long.\n\n' +
+              'Enter your password:',
               {
                 parse_mode: 'HTML',
-                reply_markup: keyboard.reply_markup,
                 reply_to_message_id: ctx.message.message_id,
               }
             );
@@ -285,65 +293,84 @@ export function setupVerifyHandlers(bot: Telegraf, config: Config) {
           );
         }
 
-        // Пытаемся получить session URL для авторизованного доступа
-        let sessionUrl: string | null = null;
-        try {
-          const sessionResponse = await fetch(`${config.apiUrl}/auth/bot/issue-session`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ telegramId }),
-          });
+        // Если у пользователя уже есть пароль, сразу выдаём session URL
+        if (data.hasPassword) {
+          console.log('User already has password, issuing session');
+          
+          let sessionUrl: string | null = null;
+          try {
+            const sessionResponse = await fetch(`${config.apiUrl}/auth/bot/issue-session`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ telegramId }),
+            });
 
-          if (sessionResponse.ok) {
-            const sessionData = await sessionResponse.json() as { sessionUrl: string };
-            sessionUrl = sessionData.sessionUrl;
-            console.log('Session URL obtained:', sessionUrl);
-          } else {
-            console.log('Session URL not available, using direct link');
+            if (sessionResponse.ok) {
+              const sessionData = await sessionResponse.json() as { sessionUrl: string };
+              sessionUrl = sessionData.sessionUrl;
+              console.log('Session URL obtained:', sessionUrl);
+            } else {
+              console.log('Session URL not available, using direct link');
+            }
+          } catch (error) {
+            console.log('Failed to get session URL, using direct link:', error);
           }
-        } catch (error) {
-          console.log('Failed to get session URL, using direct link:', error);
+
+          // Очищаем состояние
+          verificationStates.delete(userId);
+
+          // Используем session URL если доступен, иначе прямую ссылку на сайт
+          const linkUrl = sessionUrl || config.frontendUrl;
+          const buttonText = sessionUrl ? '🎉 OPEN' : '🎉 OPEN StudentDeals';
+
+          const keyboard = Markup.inlineKeyboard([
+            [Markup.button.url(buttonText, linkUrl)],
+          ]);
+
+          return ctx.reply(
+            '✅ <b>Email verified successfully!</b>\n\n' +
+            'Click the button below to open StudentDeals:',
+            {
+              parse_mode: 'HTML',
+              reply_markup: keyboard.reply_markup,
+              reply_to_message_id: ctx.message.message_id,
+            }
+          );
         }
 
-        // Очищаем состояние
-        verificationStates.delete(userId);
-
-        // Используем session URL если доступен, иначе прямую ссылку на сайт
-        const linkUrl = sessionUrl || config.frontendUrl;
-        const buttonText = sessionUrl ? '🎉 OPEN' : '🎉 OPEN StudentDeals';
-
-        console.log(`Showing OPEN button with URL: ${linkUrl}`);
-
-        // Отправляем кнопку с ссылкой
-        const keyboard = Markup.inlineKeyboard([
-          [Markup.button.url(buttonText, linkUrl)],
-        ]);
+        // Если пароля нет, запрашиваем его создание
+        console.log('User does not have password, requesting password creation');
+        state.verified = true;
+        state.waitingForPassword = true;
 
         return ctx.reply(
           '✅ <b>Email verified successfully!</b>\n\n' +
-          'Click the button below to open StudentDeals:',
+          '🔐 <b>Create your password</b>\n\n' +
+          'Please create a password for your StudentDeals account.\n' +
+          'You will use this password to log in to the website in the future.\n\n' +
+          'Password must be at least 8 characters long.\n\n' +
+          'Enter your password:',
           {
             parse_mode: 'HTML',
-            reply_markup: keyboard.reply_markup,
             reply_to_message_id: ctx.message.message_id,
           }
         );
       } catch (error) {
         console.error('Verify email error:', error);
         
-        // Даже при ошибке показываем кнопку OPEN
-        verificationStates.delete(userId);
+        // При ошибке запрашиваем пароль
+        state.verified = true;
+        state.waitingForPassword = true;
         
-        const keyboard = Markup.inlineKeyboard([
-          [Markup.button.url('🎉 OPEN StudentDeals', config.frontendUrl)],
-        ]);
-
         return ctx.reply(
           '✅ <b>Email verification completed!</b>\n\n' +
-          'Click the button below to open StudentDeals:',
+          '🔐 <b>Create your password</b>\n\n' +
+          'Please create a password for your StudentDeals account.\n' +
+          'You will use this password to log in to the website in the future.\n\n' +
+          'Password must be at least 8 characters long.\n\n' +
+          'Enter your password:',
           {
             parse_mode: 'HTML',
-            reply_markup: keyboard.reply_markup,
             reply_to_message_id: ctx.message.message_id,
           }
         );
